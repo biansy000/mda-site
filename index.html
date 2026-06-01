@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MDA: Modeling Depth Ambiguity for Flying-Point-Free Depth Estimation</title>
+<meta name="description" content="A mixture-density depth representation that eliminates flying-point artifacts at boundaries, with natural extensions to transparent objects and sky regions." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+
+<link rel="stylesheet" href="styles.css" />
+
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+</script>
+</head>
+<body>
+
+<!-- ===================== Hero ===================== -->
+<section class="hero">
+  <div class="hero-body">
+    <div class="container has-text-centered">
+      <h1 class="publication-title">
+        Modeling Depth Ambiguity:<br/>
+        <span class="title-sub">A Mixture-Density Representation for <span class="title-hl">Flying-Point-Free</span> Depth Estimation</span>
+      </h1>
+
+      <p class="publication-venue">arXiv 2026 · Preprint</p>
+
+      <p class="publication-authors">
+        <span class="author-block"><a href="#">Siyuan Bian</a><sup>1*</sup></span>
+        <span class="author-block"><a href="#">Congrong Xu</a><sup>1*</sup></span>
+        <span class="author-block"><a href="#">Jun Gao</a><sup>1,2</sup></span>
+      </p>
+      <p class="publication-affiliations">
+        <span><sup>1</sup>University of Michigan</span>
+        <span><sup>2</sup>NVIDIA</span>
+      </p>
+
+      <div class="publication-links">
+        <a class="link-button" href="#">
+          <span class="icon"><i class="ai ai-arxiv"></i><i class="fab fa-readme"></i></span>
+          <span>arXiv</span>
+        </a>
+        <a class="link-button" href="#">
+          <span class="icon"><i class="fab fa-github"></i></span>
+          <span>Code</span>
+        </a>
+        <a class="link-button" href="#bibtex">
+          <span class="icon"><i class="fas fa-quote-left"></i></span>
+          <span>BibTeX</span>
+        </a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===================== Teaser (DA3 ↔ Ours video slider + scene switch) ===================== -->
+<section class="section teaser-video-section">
+  <div class="container is-max-desktop">
+
+    <div class="tv-compare" id="teaserVideoCompare">
+      <video class="tv-base" muted playsinline preload="auto"></video>
+      <video class="tv-base" muted playsinline preload="auto"></video>
+      <video class="tv-ours" muted playsinline preload="auto"></video>
+      <video class="tv-ours" muted playsinline preload="auto"></video>
+      <div class="tv-handle"><div class="tv-line"></div></div>
+      <div class="tv-label tv-label-l">DA3</div>
+      <div class="tv-label tv-label-r">Ours</div>
+      <div class="tv-input-large" id="teaserInput">
+        <video class="tv-input-vid" muted playsinline preload="auto"></video>
+        <video class="tv-input-vid" muted playsinline preload="auto"></video>
+        <span class="tv-input-tag">Input</span>
+      </div>
+    </div>
+
+    <div class="scene-thumbs tv-thumbs" data-role="clip" aria-label="Scene">
+      <div class="tv-thumb-row">
+        <button class="scene-thumb is-active" data-clip="clip7"             title="Scene 1"><video muted playsinline preload="auto" src="assets/teaser_white/clip7_original.mp4"></video></button>
+        <button class="scene-thumb"           data-clip="severence_177_326" title="Severance"><video muted playsinline preload="auto" src="assets/teaser_white/severence_177_326_original.mp4"></video></button>
+        <button class="scene-thumb"           data-clip="clip1"             title="Scene 4"><video muted playsinline preload="auto" src="assets/teaser_white/clip1_original.mp4"></video></button>
+        <button class="scene-thumb"           data-clip="clip5"             title="Scene 2"><video muted playsinline preload="auto" src="assets/teaser_white/clip5_original.mp4"></video></button>
+        <button class="scene-thumb"           data-clip="clip6"             title="Scene 3"><video muted playsinline preload="auto" src="assets/teaser_white/clip6_original.mp4"></video></button>
+        <button class="scene-thumb"           data-clip="clip2"             title="Scene 5"><video muted playsinline preload="auto" src="assets/teaser_white/clip2_original.mp4"></video></button>
+        <button class="scene-thumb"           data-clip="clip3_firsthalf"   title="Scene 6"><video muted playsinline preload="auto" src="assets/teaser_white/clip3_firsthalf_original.mp4"></video></button>
+        <button class="scene-thumb"           data-clip="clip4"             title="Scene 7"><video muted playsinline preload="auto" src="assets/teaser_white/clip4_original.mp4"></video></button>
+      </div>
+    </div>
+
+    <p class="vid-caption">Drag the divider to compare <b>DA3</b> (left) against <b>Ours</b> (right). Click any thumbnail to switch the scene. Our model predicts clean depth boundaries without <b>flying points</b>.</p>
+  </div>
+</section>
+
+<!-- ===================== TL;DR (one-paragraph summary) ===================== -->
+<section class="section tldr-section">
+  <div class="container is-max-desktop">
+    <div class="tldr-box tldr-box-summary">
+      <p class="tldr-summary-text">
+        <b class="tldr-inline-label">TL;DR:</b> <b>MDA</b> introduces a <b>mixture-density depth representation</b> that resolves depth ambiguity at blurry object boundaries, largely eliminates <b>flying points</b>, adds negligible overhead, and applies across different backbones. It also extends naturally to other forms of depth ambiguity, including <b>transparent objects</b> and <b>sky</b>.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!--
+=========== Abstract (Problem | Fix | Extensions card) — commented out ===========
+Superseded by the one-paragraph TL;DR above. Restore by removing this comment.
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="tldr-box">
+      <span class="tldr-box-label">Abstract</span>
+      <div class="tldr-cols">
+        <div class="tldr-col tldr-col-problem">
+          <span class="tldr-col-tag tldr-tag-problem">Problem</span>
+          <p>Blurred object edges make depth <b>ambiguous</b>: the model can't tell whether a pixel sits on the foreground or the background surface. Standard depth estimators compromise between the two, producing <b>flying points</b> in empty space.</p>
+        </div>
+        <div class="tldr-divider" aria-hidden="true"></div>
+        <div class="tldr-col tldr-col-fix">
+          <span class="tldr-col-tag tldr-tag-fix">Our fix</span>
+          <p>MDA predicts a <span class="tldr-key">mixture of depths</span> per pixel: multiple plausible hypotheses, each tied to a real surface such as the foreground or background. The final output picks one hypothesis, avoiding the physically invalid space between surfaces.</p>
+        </div>
+      </div>
+      <div class="tldr-extras">
+        <span class="tldr-extras-label">Extensions</span>
+        <p>The same mixture formulation also handles <b>glass</b> (layered depth) and <b>sky</b> (a dedicated component for clean skyline boundaries).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+================================================================================
+-->
+
+<!-- ===================== What are flying points? (definition + why the fixes fail) ===================== -->
+<section class="section teaser-section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-three-fifths">
+        <h2 class="title is-3">What Are Flying Points?</h2>
+        <p class="section-lead"><b>Flying points</b> are 3D points stranded between a foreground object and the background. They appear along object edges and corrupt the 3D reconstruction; in the comparison below, the baselines are full of them while MDA stays clean.</p>
+        <p class="section-lead">Bigger backbones (<b>DA3</b>, <b>VGGT</b>) don't remove them, and neither does <b>PPD</b> — a slow denoising-style refinement on top of an existing predictor. Swap the middle column to see all three still scatter flying points between surfaces.</p>
+      </div>
+    </div>
+
+    <div class="scene-thumbs tv-thumbs boundary-thumbs" id="boundarySceneThumbs" aria-label="Scene">
+      <div class="tv-thumb-row">
+        <button class="scene-thumb is-active" data-scene="redkitchen" title="Red Kitchen"><video muted playsinline preload="auto" src="assets/videos_80f_16fps/7scenes_scene-redkitchen_seq-seq-06_frame0000_left_input.mp4"></video></button>
+        <button class="scene-thumb"           data-scene="balloon"    title="Balloon"><video muted playsinline preload="auto" src="assets/videos_80f_16fps/bonn_seq-balloon2_frame0006_left_input.mp4"></video></button>
+        <button class="scene-thumb"           data-scene="kitchen"    title="Kitchen"><video muted playsinline preload="auto" src="assets/videos_80f_16fps/NRGBD_100_seq-kitchen_frame0000_left_input.mp4"></video></button>
+        <button class="scene-thumb"           data-scene="whiteroom"  title="White Room"><video muted playsinline preload="auto" src="assets/videos_80f_16fps/NRGBD_100_seq-whiteroom_frame0003_right_input.mp4"></video></button>
+        <button class="scene-thumb"           data-scene="alley"      title="Alley"><video muted playsinline preload="auto" src="assets/videos_80f_16fps/sintel_seq-alley_1_frame0000_left_input.mp4"></video></button>
+      </div>
+    </div>
+
+    <div class="vid-grid vid-grid-3 vid-header">
+      <div>Input</div>
+      <div id="vidBaselineLabel">DA3</div>
+      <div class="cmp-ours">Ours</div>
+    </div>
+
+    <div class="vid-grid vid-grid-3" id="boundaryVideoGrid">
+      <video data-slot="input"    autoplay muted loop playsinline preload="auto"></video>
+      <video data-slot="baseline" autoplay muted loop playsinline preload="auto"></video>
+      <video data-slot="ours"     autoplay muted loop playsinline preload="auto" class="vid-ours"></video>
+    </div>
+
+    <div class="vid-tabs vid-tabs-baseline" data-role="baseline" role="tablist" aria-label="Baseline">
+      <span class="vid-tabs-label">Compare against:</span>
+      <button class="vid-tab is-active" data-baseline="pretrained">DA3</button>
+      <button class="vid-tab" data-baseline="vggt">VGGT</button>
+      <button class="vid-tab" data-baseline="ppd">PPD</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== §3 The real cause ===================== -->
+<section class="section has-background-light">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-three-fifths">
+        <h2 class="title is-3">Why Flying Points Happen</h2>
+        <p class="section-lead">These artifacts come from a standard assumption: one depth per pixel. On flat regions this is fine. Near object edges, the pixel mixes evidence from both foreground and background, and the model can't tell which surface it sits on. So its true depth is <b>ambiguous</b>.</p>
+      </div>
+    </div>
+
+    <div class="columns is-centered">
+      <div class="column is-four-fifths">
+        <div class="content has-text-justified">
+          <p>
+            A one-depth model cannot represent this ambiguity. Its <b>unimodal</b> loss always demands a single answer, so training pulls the prediction to a value between the foreground and background depths. In 3D, that value lies on neither surface and becomes a floating point.
+          </p>
+        </div>
+
+        <figure class="figure uv-card" id="unimodalViewer">
+          <span class="viewer-badge"><i class="fas fa-hand-pointer"></i> Click a point on the image</span>
+          <div class="uv-pair">
+            <div class="uv-input-wrap">
+              <img class="uv-image" alt="input frame with depth-edges overlaid in red" />
+              <div class="uv-marker" aria-hidden="true"></div>
+            </div>
+            <div class="uv-canvas-wrap">
+              <canvas class="uv-canvas"></canvas>
+              <span class="pc-canvas-label"><i class="fas fa-cubes"></i> Point cloud · drag to orbit</span>
+              <div class="uv-hud"><span class="uv-snap">Click any red edge in the input</span></div>
+            </div>
+          </div>
+          <div class="uv-zoom-row">
+            <div class="uv-zoom">
+              <span class="uv-zoom-label">RGB · zoom</span>
+              <canvas class="uv-zoom-rgb"></canvas>
+            </div>
+            <div class="uv-zoom">
+              <span class="uv-zoom-label">Depth · zoom</span>
+              <canvas class="uv-zoom-depth"></canvas>
+            </div>
+          </div>
+          <figcaption>
+            The 3D point cloud of a baseline (DA3-GIANT) prediction. Click any <span class="uv-edge-text">red depth edge</span> in the input, and the corresponding pixels light up in <span class="uv-orange-text">orange</span> in the 3D viewer, making the <b>flying points</b> more obvious. The two zoom panels show the same pixel window in RGB and predicted depth.
+          </figcaption>
+        </figure>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== Method ===================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-three-fifths">
+        <h2 class="title is-3">Our Fix: A Mixture-Density Representation</h2>
+      </div>
+    </div>
+
+    <div class="columns is-centered">
+      <div class="column is-four-fifths">
+        <div class="content has-text-justified">
+          <p>
+            MDA replaces the single-value depth output with a <b>mixture density</b>: each pixel predicts a few <b>depth hypotheses</b>, each with a probability. On flat regions, the hypotheses agree — just like a standard depth model. At an edge, they separate: one matches the foreground, another the background.
+          </p>
+          <p>
+            To produce a final depth, MDA <b>picks one</b> hypothesis rather than averaging them. Even with imperfect probabilities, the output is always one of the predictions, so it lands on a real surface and is <b>flying-point-free</b>. Only the final layer changes, so the same head plugs into <b>DA3</b> or <b>VGGT</b> with negligible overhead.
+          </p>
+        </div>
+
+        <figure class="figure">
+          <img src="assets/uni_multi_modal_loss.png?v=3" alt="Unimodal vs. mixture-density depth at an object boundary." />
+          <figcaption>
+            <b>(a)</b> A boundary pixel covers both a foreground surface at $d_1$ and a background surface at $d_2$.
+            <b>(b)</b> A unimodal predictor outputs a single value $d_3$ between $d_1$ and $d_2$, on neither surface, resulting in a flying point.
+            <b>(c)</b> MDA's mixture has one hypothesis per surface; decoding picks one.
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== Depth-distribution viewer ===================== -->
+<section class="section has-background-light" id="depthViewerSection">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-three-fifths">
+        <h2 class="title is-3">Look Inside a Pixel</h2>
+        <p class="section-lead">In MDA, edge pixels carry a <b>multi-peaked</b> distribution. Click near an edge to see the predicted <b>mixture density</b>: one peak per candidate surface. MDA selects one of these peaks, so its final output never falls between surfaces.</p>
+      </div>
+    </div>
+
+    <div class="dviewer-panel" id="depthViewer">
+      <span class="viewer-badge"><i class="fas fa-hand-pointer"></i> Click a point on the image</span>
+      <div class="dviewer-controls">
+        <label class="dviewer-field">
+          <span>View</span>
+          <input type="range" min="0" max="7" value="0" step="1" data-role="view" />
+          <span class="dviewer-view-num">0</span>
+        </label>
+      </div>
+
+      <div class="dviewer-stage">
+        <figure class="dviewer-image dviewer-image-main">
+          <div class="dviewer-image-canvas">
+            <img class="dviewer-rgb" alt="input frame with depth-boundary pixels highlighted in red" />
+            <canvas class="dviewer-overlay"></canvas>
+          </div>
+          <figcaption>Input, with boundaries tinted red</figcaption>
+        </figure>
+        <figure class="dviewer-plot-wrap">
+          <canvas class="dviewer-plot"></canvas>
+          <figcaption>Depth distribution at the selected pixel</figcaption>
+        </figure>
+      </div>
+
+      <figure class="dviewer-pc-wrap">
+        <div class="dviewer-pc-canvas-wrap">
+          <canvas class="dviewer-pc-canvas"></canvas>
+          <span class="pc-canvas-label"><i class="fas fa-cubes"></i> Point cloud · drag to orbit</span>
+          <div class="dviewer-pc-hud"><span class="dviewer-pc-info">— pts</span></div>
+        </div>
+        <figcaption>3D point cloud of MDA's predicted depth. The clicked boundary pixel is marked with an <b>red dot</b>, and its surrounding image window lights up in <b>orange</b>.</figcaption>
+      </figure>
+
+      <div class="scene-thumbs" data-role="cache" aria-label="Sample">
+        <span class="scene-thumbs-label">Input · pick a sample</span>
+        <button class="scene-thumb is-active" data-cache="scan_00184" title="Indoor · scan_00184"><img src="assets/depth_viewer/scan_00184/overlay_0.png?v=9" alt="scan_00184 input" /></button>
+        <button class="scene-thumb"           data-cache="scan_00183" title="Indoor · scan_00183"><img src="assets/depth_viewer/scan_00183/overlay_0.png?v=9" alt="scan_00183 input" /></button>
+        <button class="scene-thumb"           data-cache="scan_00185" title="Indoor · scan_00185"><img src="assets/depth_viewer/scan_00185/overlay_0.png?v=9" alt="scan_00185 input" /></button>
+      </div>
+
+    </div>
+  </div>
+</section>
+<script type="module" src="depth-viewer.js"></script>
+
+<!-- ===================== Blur robustness (single panel) ===================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-three-fifths">
+        <h2 class="title is-3">Robustness to Input Blur</h2>
+        <p class="section-lead">Blur increases depth ambiguity at object edges: more pixels contain evidence from both foreground and background surfaces. As blur grows, baseline depth quality drops sharply, while MDA remains stable and nearly <b>flying-point-free</b>. Filtering the baselines' lowest-confidence pixels, the standard fix, does not remove all flying points either.</p>
+      </div>
+    </div>
+
+    <div class="compare-panel compare-panel-wide" id="blurCompare">
+      <div class="cmp-tabs" role="tablist" aria-label="Confidence threshold">
+        <button class="cmp-tab is-active" data-conf="100">All points</button>
+        <button class="cmp-tab" data-conf="97">Conf $\geq$ 97</button>
+        <button class="cmp-tab" data-conf="95">Conf $\geq$ 95</button>
+        <button class="cmp-tab" data-conf="90">Conf $\geq$ 90</button>
+      </div>
+
+      <div class="blur-slider-field">
+        <span class="blur-slider-cap">Clean</span>
+        <input type="range" min="0" max="2" step="1" value="2" data-role="blur" aria-label="Blur level" />
+        <span class="blur-slider-cap">Blurry</span>
+        <span class="blur-slider-val"><i>s</i>&nbsp;=&nbsp;8</span>
+      </div>
+
+      <div class="compare-stack">
+        <div class="compare-pair compare-pair-header blur-row-grid">
+          <div class="cmp-col-label"></div>
+          <div class="cmp-col-label">Input</div>
+          <div class="cmp-col-label">DA3 vs <span class="cmp-col-hl">Ours</span></div>
+          <div class="cmp-col-label">VGGT vs <span class="cmp-col-hl">Ours</span></div>
+        </div>
+
+        <div class="compare-pair blur-row-grid">
+          <div class="blur-row-label"><strong><i>s</i> = 8</strong><span>More blurry</span></div>
+          <figure class="cs-input-wrap"><img class="cs-input" alt="blurred input" /></figure>
+          <div class="compare-slider" data-baseline="pretrained">
+            <img class="cs-base" alt="DA3 depth" /><img class="cs-ours" alt="MDA depth" />
+            <div class="cs-handle"><div class="cs-line"></div><div class="cs-knob"><i class="fas fa-left-right"></i></div></div>
+            <div class="cs-label cs-label-l">DA3</div><div class="cs-label cs-label-r">Ours</div>
+          </div>
+          <div class="compare-slider" data-baseline="vggt">
+            <img class="cs-base" alt="VGGT depth" /><img class="cs-ours" alt="MDA depth" />
+            <div class="cs-handle"><div class="cs-line"></div><div class="cs-knob"><i class="fas fa-left-right"></i></div></div>
+            <div class="cs-label cs-label-l">VGGT</div><div class="cs-label cs-label-r">Ours</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="scene-thumbs" data-role="scene" aria-label="Scene">
+        <span class="scene-thumbs-label">Input · pick a scene</span>
+        <button class="scene-thumb is-active" data-scene="redkitchen" title="Red Kitchen"><img alt="Red Kitchen input" /></button>
+        <button class="scene-thumb"           data-scene="chess"      title="Chess Set"><img alt="Chess Set input" /></button>
+        <button class="scene-thumb"           data-scene="office"     title="Office"><img alt="Office input" /></button>
+        <button class="scene-thumb"           data-scene="fire"       title="Fire"><img alt="Fire input" /></button>
+        <button class="scene-thumb"           data-scene="heads"      title="Heads"><img alt="Heads input" /></button>
+      </div>
+    </div>
+
+    <div class="charts">
+      <figure class="figure half">
+        <img src="assets/blur_cd.png?v=2" alt="Chamfer distance vs. input blur level." />
+        <figcaption>Chamfer distance (CD, lower is better)</figcaption>
+      </figure>
+      <figure class="figure half">
+        <img src="assets/blur_acc.png?v=2" alt="Pred-to-GT distances (Acc) vs. input blur level." />
+        <figcaption>Pred-to-GT distances (Acc, lower is better)</figcaption>
+      </figure>
+    </div>
+    <p class="charts-caption">Across all blur levels, the baselines remain consistently worse than <b>MDA</b>, and their performance drops more sharply as input blur grows.</p>
+  </div>
+</section>
+
+<!-- ===================== §6 Beyond boundaries ===================== -->
+<section class="section has-background-light">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-three-fifths">
+        <h2 class="title is-3">Extension Beyond Boundaries</h2>
+        <p class="section-lead">The same <b>mixture density</b> handles other forms of depth ambiguity. For <b>glass</b>, a single camera ray can reach multiple surfaces, so one pixel may have multiple valid depths; the mixture preserves them instead of collapsing them. For <b>sky</b>, MDA adds a dedicated depth component pinned at an effectively infinite depth, letting sky pixels separate cleanly from finite-depth surfaces.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== Sky ===================== -->
+<section class="section has-background-light">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-three-fifths">
+        <h2 class="title is-3">Sky: A Dedicated Component, Threshold-Free Skylines</h2>
+        <p class="section-lead">A pixel is labelled sky when its dedicated <b>sky component</b> has the highest weight. The sky pixels are pinned to the component's fixed, effectively infinite depth, generating no flying points.</p>
+      </div>
+    </div>
+
+    <figure class="sky-comparison">
+      <span class="viewer-badge sky-badge"><i class="fas fa-hand-pointer"></i> Drag the 3D view</span>
+
+      <div class="cmp-grid cmp-grid-3 cmp-header">
+        <div>Input</div><div>Baseline point cloud (no sky comp.)</div><div class="cmp-ours">Ours point cloud</div>
+      </div>
+
+      <div class="cmp-grid cmp-grid-3 sky-row" data-scene="sky_4">
+        <img src="sky_point_rendering/assets/sky_4_inp.png" alt="" />
+        <div class="sky-cell" data-variant="baseline"><canvas></canvas><span class="pc-canvas-label"><i class="fas fa-cubes"></i> Point cloud · drag to orbit</span></div>
+        <div class="sky-cell" data-variant="wsky"><canvas></canvas><span class="pc-canvas-label"><i class="fas fa-cubes"></i> Point cloud · drag to orbit</span></div>
+      </div>
+
+      <div class="cmp-grid cmp-grid-3 sky-row" data-scene="sky_2">
+        <img src="sky_point_rendering/assets/sky_2_inp.png" alt="" />
+        <div class="sky-cell" data-variant="baseline"><canvas></canvas><span class="pc-canvas-label"><i class="fas fa-cubes"></i> Point cloud · drag to orbit</span></div>
+        <div class="sky-cell" data-variant="wsky"><canvas></canvas><span class="pc-canvas-label"><i class="fas fa-cubes"></i> Point cloud · drag to orbit</span></div>
+      </div>
+
+      <div class="cmp-grid cmp-grid-3 sky-row" data-scene="sky_0">
+        <img src="sky_point_rendering/assets/sky_0_inp.png" alt="" />
+        <div class="sky-cell" data-variant="baseline"><canvas></canvas><span class="pc-canvas-label"><i class="fas fa-cubes"></i> Point cloud · drag to orbit</span></div>
+        <div class="sky-cell" data-variant="wsky"><canvas></canvas><span class="pc-canvas-label"><i class="fas fa-cubes"></i> Point cloud · drag to orbit</span></div>
+      </div>
+
+      <figcaption class="sky-caption">
+        The <b>baseline</b> unprojects sky pixels at their predicted finite depth, scattering them as a noisy near-field shell. MDA's dedicated <b>sky component</b> pushes those pixels to a far plane, so the visible geometry remains intact and the skyline stays flying-point-free. Drag either point-cloud panel in a row to rotate both.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+<script type="module" src="sky-viewer.js" defer></script>
+<script type="module" src="unimodal-viewer.js" defer></script>
+
+<!-- ===================== Transparent ===================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-three-fifths">
+        <h2 class="title is-3">Transparent Objects: Layered Depth From One Image</h2>
+        <p class="section-lead">Through glass, a pixel can have <b>more than one real depth</b>: the glass surface and what lies behind it. MDA keeps both hypotheses active.</p>
+        <p class="section-lead"><i>First layer</i>: the glass. <i>Last layer</i>: the surface behind it. <i>Mask</i>: pixels where both layers remain active.</p>
+      </div>
+    </div>
+
+    <div class="cmp-grid cmp-grid-4 cmp-header">
+      <div>Input</div><div class="cmp-ours">Layer 1 (front)</div><div class="cmp-ours">Layer Last (behind)</div><div class="cmp-ours">Segmentation</div>
+    </div>
+    <div class="cmp-grid cmp-grid-4">
+      <img src="assets/transparent/000000134_input.png" alt="" />
+      <img src="assets/transparent/000000134_layer1.png" alt="" />
+      <img src="assets/transparent/000000134_layerN.png" alt="" />
+      <img src="assets/transparent/000000134_seg.png" alt="" />
+    </div>
+    <div class="cmp-grid cmp-grid-4">
+      <img src="assets/transparent/000000209_input.png" alt="" />
+      <img src="assets/transparent/000000209_layer1.png" alt="" />
+      <img src="assets/transparent/000000209_layerN.png" alt="" />
+      <img src="assets/transparent/000000209_seg.png" alt="" />
+    </div>
+    <div class="cmp-grid cmp-grid-4">
+      <img src="assets/transparent/000000469_input.png" alt="" />
+      <img src="assets/transparent/000000469_layer1.png" alt="" />
+      <img src="assets/transparent/000000469_layerN.png" alt="" />
+      <img src="assets/transparent/000000469_seg.png" alt="" />
+    </div>
+  </div>
+</section>
+
+<!-- ===================== BibTeX ===================== -->
+<section class="section" id="bibtex">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-three-fifths">
+        <h2 class="title is-3">BibTeX</h2>
+      </div>
+    </div>
+    <div class="columns is-centered">
+      <div class="column is-four-fifths">
+        <pre class="bibtex"><code>@article{bian2026mda,
+  title   = {Modeling Depth Ambiguity: A Mixture-Density Representation for Flying-Point-Free Depth Estimation},
+  author  = {Bian, Siyuan and Xu, Congrong and Gao, Jun},
+  journal = {arXiv preprint},
+  year    = {2026}
+}</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== Footer ===================== -->
+<footer class="footer">
+  <div class="container is-max-desktop has-text-centered">
+    <p>Page template inspired by the <a href="https://nerfies.github.io/">Nerfies</a> project page.</p>
+  </div>
+</footer>
+
+<script>
+// ---------- Reusable image before/after compare slider ----------
+// Supports 1+ synced sliders in one panel. Each slider may sit inside a
+// .compare-pair carrying data-row="..."; that value is passed to resolve()
+// so every row can compose its own image filenames. A single drag updates
+// all sliders together.
+function setupCompareSlider(panelId, resolve, initialState, opts) {
+  const panel = document.getElementById(panelId);
+  if (!panel) return null;
+  // Context forced when resolving the scene-thumbnail previews. Lets a panel
+  // keep its thumbnails clean (e.g. blur:'1') even while the rows are blurred.
+  const thumbCtx = (opts && opts.thumbCtx) || {};
+
+  const sliders = Array.from(panel.querySelectorAll('.compare-slider')).map(slider => {
+    const pair = slider.closest('.compare-pair');
+    // Collect contextual data-* from both the row (.compare-pair) and the
+    // slider itself. Slider-level attrs win on conflict.
+    const localCtx = {};
+    if (pair) Object.assign(localCtx, pair.dataset);
+    Object.assign(localCtx, slider.dataset);
+    return {
+      slider,
+      base:    slider.querySelector('.cs-base'),
+      ours:    slider.querySelector('.cs-ours'),
+      handle:  slider.querySelector('.cs-handle'),
+      labelL:  slider.querySelector('.cs-label-l'),
+      input:   pair ? pair.querySelector('.cs-input') : null,
+      localCtx,
+    };
+  });
+  if (sliders.length === 0) return null;
+
+  // Scene thumbnails (optional): a strip below the panel that doubles as the
+  // input preview. Each thumb's <img> is set from resolve()'s inputSrc for that
+  // scene, so it reflects the current state (e.g. blur level) and the active
+  // one shows the scene currently displayed in the comparison.
+  const thumbGroup = panel.querySelector('.scene-thumbs[data-role="scene"]');
+  const thumbs = thumbGroup
+    ? Array.from(thumbGroup.querySelectorAll('.scene-thumb')).map(btn => ({
+        btn, img: btn.querySelector('img'), scene: btn.dataset.scene,
+      }))
+    : [];
+
+  const state = { ...initialState };
+
+  function refresh() {
+    sliders.forEach(s => {
+      const ctx = { ...state, ...s.localCtx };
+      const r = resolve(ctx);
+      if (r.baseSrc)  s.base.src  = r.baseSrc;
+      if (r.oursSrc)  s.ours.src  = r.oursSrc;
+      if (r.inputSrc && s.input) s.input.src = r.inputSrc;
+      if (r.leftLabel != null && s.labelL) s.labelL.textContent = r.leftLabel;
+    });
+    thumbs.forEach(t => {
+      const r = resolve({ ...state, scene: t.scene, ...thumbCtx });
+      if (r.inputSrc && t.img) t.img.src = r.inputSrc;
+      t.btn.classList.toggle('is-active', t.scene === state.scene);
+    });
+  }
+
+  let percent = 50;
+  function setPercent(pct) {
+    percent = Math.max(0, Math.min(100, pct));
+    sliders.forEach(s => {
+      s.ours.style.clipPath = `inset(0 0 0 ${percent}%)`;
+      s.handle.style.left = percent + '%';
+    });
+  }
+  setPercent(50);
+
+  let dragging = false;
+  let activeSlider = null;
+  let hoverCount = 0;
+  let offscreen = false;
+
+  function onMove(clientX) {
+    if (!activeSlider) return;
+    const rect = activeSlider.getBoundingClientRect();
+    setPercent(((clientX - rect.left) / rect.width) * 100);
+  }
+  sliders.forEach(s => {
+    s.slider.addEventListener('mousedown', e => { dragging = true; activeSlider = s.slider; onMove(e.clientX); });
+    s.slider.addEventListener('touchstart', e => {
+      dragging = true; activeSlider = s.slider; onMove(e.touches[0].clientX);
+    }, { passive: true });
+    s.slider.addEventListener('mouseenter', () => { hoverCount++; });
+    s.slider.addEventListener('mouseleave', () => { hoverCount = Math.max(0, hoverCount - 1); });
+  });
+  window.addEventListener('mousemove', e => { if (dragging) onMove(e.clientX); });
+  window.addEventListener('mouseup',   () => { dragging = false; activeSlider = null; });
+  window.addEventListener('touchmove', e => { if (dragging) onMove(e.touches[0].clientX); }, { passive: true });
+  window.addEventListener('touchend',  () => { dragging = false; activeSlider = null; });
+
+  // ---- Auto-animation: smooth ping-pong reveal ----
+  // Sine ease 0%→100%→0% with a ~5.2s period. Pauses on hover, drag, or when
+  // the panel is off-screen. Phase is re-synced to the current slider position
+  // on resume so manual scrubbing transitions back into animation without a jump.
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduceMotion) {
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(entries => {
+        offscreen = !entries[0].isIntersecting;
+      }, { threshold: 0.05 });
+      io.observe(panel);
+    }
+    const PERIOD_MS = 5200;
+    let phase = 0;
+    let lastT = null;
+    let wasPaused = true;
+    function tick(t) {
+      requestAnimationFrame(tick);
+      if (lastT == null) { lastT = t; return; }
+      const dt = t - lastT;
+      lastT = t;
+      const isPaused = hoverCount > 0 || dragging || offscreen;
+      if (!isPaused) {
+        if (wasPaused) {
+          // Sync phase to current percent so we resume without jumping.
+          const c = Math.max(-1, Math.min(1, 1 - 2 * percent / 100));
+          phase = Math.acos(c) / (2 * Math.PI);
+        }
+        phase = (phase + dt / PERIOD_MS) % 1;
+        const sine = (1 - Math.cos(2 * Math.PI * phase)) / 2;  // 0..1..0 smooth
+        setPercent(sine * 100);
+      }
+      wasPaused = isPaused;
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // Wire the scene-thumbnail strip: clicking a thumb switches scene.
+  thumbs.forEach(t => {
+    t.btn.addEventListener('click', () => { state.scene = t.scene; refresh(); });
+  });
+
+  // Wire every tab group inside the panel (scene / baseline / ...).
+  panel.querySelectorAll('.cmp-tabs').forEach(group => {
+    const firstTab = group.querySelector('.cmp-tab');
+    if (!firstTab) return;
+    const stateKey = Object.keys(firstTab.dataset)[0];
+    group.querySelectorAll('.cmp-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        group.querySelectorAll('.cmp-tab').forEach(b => b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+        state[stateKey] = btn.dataset[stateKey];
+        refresh();
+      });
+    });
+  });
+
+  refresh();
+  return { refresh, setState: (u) => { Object.assign(state, u); refresh(); } };
+}
+
+// ---------- Teaser boundary comparison (one scene at a time, 3 baselines synced) ----------
+(function() {
+  const prefixes = {
+    heads:  '7scenes_heads_seq-01_frame0002_left',
+    crowd:  'bonn_crowd3_frame0018_left',
+    chess:  '7scenes_chess_seq-03_frame0003_left',
+    facade: 'ETH3D_facade_frame0018_left',
+    alley:  'sintel_alley_1_frame0000_left',
+  };
+  const baselineLabels = { pretrained: 'DA3', vggt: 'VGGT', ppd: 'PPD' };
+  setupCompareSlider('teaserCompare', ({ scene, baseline }) => {
+    const p = prefixes[scene];
+    return {
+      inputSrc: `assets/comparison/${p}_input.png`,
+      baseSrc:  `assets/comparison/${p}_${baseline}.png`,
+      oursSrc:  `assets/comparison/${p}_ours.png`,
+      leftLabel: baselineLabels[baseline]
+    };
+  }, { scene: 'heads' });
+})();
+
+// ---------- Teaser video slider (DA3 ↔ Ours), double-buffered for flicker-free swaps ----------
+(function() {
+  const panel = document.getElementById('teaserVideoCompare');
+  if (!panel) return;
+  const DIR = 'assets/teaser_white/';
+  const clips = ['clip7','severence_177_326','clip1','clip5','clip6','clip2','clip3_firsthalf','clip4'];
+  const SLOW = new Set(['clip6','clip4']);   // Scene 3 / Scene 7 play at half speed
+
+  // Two stacked buffers: while one is on screen, the next clip loads into the
+  // hidden one and we only cross-fade once its first frame is decoded — so the
+  // panel never flashes to black during a swap.
+  const baseEls = Array.from(panel.querySelectorAll('.tv-base'));
+  const oursEls = Array.from(panel.querySelectorAll('.tv-ours'));
+  const handle = panel.querySelector('.tv-handle');
+  const inputWrap = document.getElementById('teaserInput');
+  const inputEls = inputWrap ? Array.from(inputWrap.querySelectorAll('.tv-input-vid')) : [];
+  const thumbGroup = document.querySelector('.scene-thumbs[data-role="clip"]');
+  const thumbs = thumbGroup ? Array.from(thumbGroup.querySelectorAll('.scene-thumb')) : [];
+  const thumbVids = thumbs.map(t => t.querySelector('video'));
+
+  let current = 0;
+  let buf = -1;          // index of the buffer currently shown (-1 = none yet)
+  let token = 0;         // guards against overlapping rapid switches
+
+  function whenReady(v) {
+    return new Promise(res => {
+      if (v.readyState >= 2) return res();
+      v.addEventListener('loadeddata', () => res(), { once: true });
+    });
+  }
+
+  // All layers sharing a buffer index (compare base + ours, plus the large input).
+  const layersOf = (b) => [baseEls[b], oursEls[b], inputEls[b]].filter(Boolean);
+
+  function load(i) {
+    current = (i + clips.length) % clips.length;
+    const c = clips[current];
+    const rate = SLOW.has(c) ? 0.5 : 1;
+    const myToken = ++token;
+    const nb = buf === 0 ? 1 : 0;   // pick the hidden buffer (buf -1/1 -> 0, buf 0 -> 1)
+
+    baseEls[nb].src = DIR + c + '_DA3.mp4';
+    oursEls[nb].src = DIR + c + '_MoG.mp4';
+    if (inputEls[nb]) inputEls[nb].src = DIR + c + '_original.mp4';
+    const incoming = layersOf(nb);
+    incoming.forEach(v => { v.loop = true; v.load(); });
+    applyClip();   // keep the divider position on the incoming "ours" layer
+
+    thumbs.forEach((t, k) => t.classList.toggle('is-active', k === current));
+    // Only the selected thumbnail plays, looping in place; the rest stay paused.
+    thumbVids.forEach((v, k) => {
+      if (!v) return;
+      if (k === current) { v.loop = true; v.playbackRate = rate; v.currentTime = 0; v.play().catch(() => {}); }
+      else { v.pause(); }
+    });
+
+    Promise.all(incoming.map(whenReady)).then(() => {
+      if (myToken !== token) return;   // a newer click superseded this load
+      incoming.forEach(v => { try { v.currentTime = 0; } catch (e) {} v.playbackRate = rate; v.play().catch(() => {}); });
+      if (baseEls[nb].videoWidth) {
+        const ar = baseEls[nb].videoWidth + ' / ' + baseEls[nb].videoHeight;
+        panel.style.aspectRatio = ar;
+        if (inputWrap) inputWrap.style.aspectRatio = ar;
+      }
+      const old = buf;
+      incoming.forEach(v => v.classList.add('is-shown'));
+      if (old >= 0) layersOf(old).forEach(v => v.classList.remove('is-shown'));
+      buf = nb;
+      if (old >= 0) setTimeout(() => {
+        if (buf !== old) layersOf(old).forEach(v => v.pause());
+      }, 320);
+    });
+  }
+
+  thumbs.forEach((t, k) => t.addEventListener('click', () => load(k)));
+
+  // ---- Divider follows the mouse over the panel (no click needed) ----
+  let percent = 50;
+  function applyClip() {
+    oursEls.forEach(v => { v.style.clipPath = `inset(0 0 0 ${percent}%)`; });
+    handle.style.left = percent + '%';
+  }
+  function setPercent(p) { percent = Math.max(0, Math.min(100, p)); applyClip(); }
+  setPercent(50);
+  function onMove(x) {
+    const r = panel.getBoundingClientRect();
+    setPercent(((x - r.left) / r.width) * 100);
+  }
+  panel.addEventListener('mousemove', e => onMove(e.clientX));
+  panel.addEventListener('touchstart', e => onMove(e.touches[0].clientX), { passive: true });
+  panel.addEventListener('touchmove',  e => onMove(e.touches[0].clientX), { passive: true });
+
+  load(0);
+})();
+
+// ---------- Blur robustness ----------
+(function() {
+  const baselineLabels = { pretrained: 'DA3', vggt: 'VGGT' };
+  // Each scene maps to its sub-directory + the frame stem (frame number + view angle).
+  // dir + stem identify the asset folder + filename suffix for each scene.
+  // Every scene has real `input_blur{N}_<stem>.png` files — no synthesised blur.
+  const scenes = {
+    redkitchen: { dir: '7scenes/redkitchen_seq-06', stem: 'frame0000_left'  },
+    chess:      { dir: '7scenes/chess_seq-03',      stem: 'frame0003_left'  },
+    office:     { dir: '7scenes/office_seq-06',     stem: 'frame0000_up'    },
+    fire:       { dir: '7scenes/fire_seq-04',       stem: 'frame0000_right' },
+    heads:      { dir: '7scenes/heads_seq-01',      stem: 'frame0002_left'  },
+  };
+  const OURS = 'ours_alldata_mog_sky_full_nolast';
+  const ROOT = 'assets/selected_vis_image_blur_conf';
+
+  const api = setupCompareSlider('blurCompare', ({ scene, conf, baseline, blur }) => {
+    const s = scenes[scene];
+    const tail = `blur${blur}_conf${conf}_${s.stem}.png`;
+    return {
+      inputSrc: `${ROOT}/${s.dir}/input_blur${blur}_${s.stem}.png`,
+      baseSrc:  `${ROOT}/${s.dir}/${baseline}_${tail}`,
+      oursSrc:  `${ROOT}/${s.dir}/${OURS}_${tail}`,
+      leftLabel: baselineLabels[baseline]
+    };
+  }, { scene: 'redkitchen', conf: '100', blur: '8' }, { thumbCtx: { blur: '1' } });
+
+  // Blur-level slider: three stops mapped to the available blur strengths.
+  // Starts at s=8 (the strongest blur) so the contrast is visible up front.
+  const BLUR_LEVELS = ['1', '4', '8'];
+  const BLUR_DESC   = { '1': 'Clean', '4': 'Blurry', '8': 'More blurry' };
+  const blurInput = document.querySelector('#blurCompare input[data-role="blur"]');
+  const blurVal   = document.querySelector('#blurCompare .blur-slider-val');
+  const blurLabel = document.querySelector('#blurCompare .blur-row-label');
+  function applyBlur(idx) {
+    const lvl = BLUR_LEVELS[idx] || '8';
+    if (blurVal)   blurVal.innerHTML   = `<i>s</i>&nbsp;=&nbsp;${lvl}`;
+    if (blurLabel) blurLabel.innerHTML = `<strong><i>s</i> = ${lvl}</strong><span>${BLUR_DESC[lvl]}</span>`;
+    if (blurInput) blurInput.style.setProperty('--range-fill',
+      (idx / (BLUR_LEVELS.length - 1) * 100) + '%');
+    if (api) api.setState({ blur: lvl });
+  }
+  if (blurInput) {
+    blurInput.addEventListener('input', () => applyBlur(+blurInput.value));
+    applyBlur(+blurInput.value);
+  }
+})();
+
+// ---------- §1 Boundary video (Input | selected baseline | Ours) ----------
+(function() {
+  const VIDEO_DIR = 'assets/videos_80f_16fps';
+  const scenes = {
+    redkitchen: '7scenes_scene-redkitchen_seq-seq-06_frame0000_left',
+    balloon:    'bonn_seq-balloon2_frame0006_left',
+    kitchen:    'NRGBD_100_seq-kitchen_frame0000_left',
+    whiteroom:  'NRGBD_100_seq-whiteroom_frame0003_right',
+    alley:      'sintel_seq-alley_1_frame0000_left',
+  };
+  const baselineLabels = { pretrained: 'DA3', vggt: 'VGGT', ppd: 'PPD' };
+
+  const grid   = document.getElementById('boundaryVideoGrid');
+  const videos = Array.from(grid.querySelectorAll('video'));
+  const label  = document.getElementById('vidBaselineLabel');
+  const master = videos.find(v => v.dataset.slot === 'input');
+
+  const state = { scene: 'redkitchen', baseline: 'pretrained' };
+  const sceneThumbGroup = document.getElementById('boundarySceneThumbs');
+  const sceneThumbs = sceneThumbGroup
+    ? Array.from(sceneThumbGroup.querySelectorAll('.scene-thumb'))
+    : [];
+  const sceneThumbVids = sceneThumbs.map(t => t.querySelector('video'));
+
+  // The middle column's role tracks the selected baseline; input/ours are fixed.
+  const roleForSlot = slot => (slot === 'baseline' ? state.baseline : slot);
+  const srcFor = v => `${VIDEO_DIR}/${scenes[state.scene]}_${roleForSlot(v.dataset.slot)}.mp4`;
+
+  function syncSceneThumbs(resetActive) {
+    sceneThumbs.forEach((t, k) => t.classList.toggle('is-active', t.dataset.scene === state.scene));
+    sceneThumbVids.forEach((v, k) => {
+      if (!v) return;
+      if (sceneThumbs[k].dataset.scene === state.scene) {
+        v.loop = true;
+        if (resetActive) {
+          try { v.currentTime = 0; } catch (e) {}
+        }
+        v.play().catch(() => {});
+      } else {
+        v.pause();
+      }
+    });
+  }
+
+  function loadAll() {
+    if (!scenes[state.scene]) return;
+    syncSceneThumbs(true);
+    let pending = videos.length;
+    videos.forEach(v => {
+      v.pause();
+      v.src = srcFor(v);
+      v.load();
+      const onReady = () => {
+        v.removeEventListener('loadeddata', onReady);
+        if (--pending === 0) {
+          videos.forEach(x => { try { x.currentTime = 0; } catch (e) {} });
+          videos.forEach(x => x.play().catch(() => {}));
+        }
+      };
+      v.addEventListener('loadeddata', onReady);
+    });
+  }
+
+  // Swap only the middle video when the baseline changes; keep it in phase.
+  function reloadBaseline() {
+    const mid = videos.find(v => v.dataset.slot === 'baseline');
+    if (label) label.textContent = baselineLabels[state.baseline];
+    if (!mid) return;
+    mid.pause();
+    mid.src = srcFor(mid);
+    mid.load();
+    const onReady = () => {
+      mid.removeEventListener('loadeddata', onReady);
+      try { mid.currentTime = master ? master.currentTime : 0; } catch (e) {}
+      mid.play().catch(() => {});
+    };
+    mid.addEventListener('loadeddata', onReady);
+  }
+
+  // Re-sync periodically: realign drift to the input video.
+  setInterval(() => {
+    if (!master || master.paused || master.readyState < 2) return;
+    const t = master.currentTime;
+    videos.forEach(v => {
+      if (v !== master && Math.abs(v.currentTime - t) > 0.15 && v.readyState >= 2) {
+        try { v.currentTime = t; } catch (e) {}
+      }
+    });
+  }, 1500);
+
+  let initialized = false;
+  function initOnce() { if (initialized) return; initialized = true; loadAll(); }
+
+  sceneThumbs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.scene = btn.dataset.scene;
+      initialized = true;
+      loadAll();
+    });
+  });
+
+  document.querySelectorAll('.vid-tabs[data-role="baseline"] .vid-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.vid-tabs[data-role="baseline"] .vid-tab').forEach(b => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      state.baseline = btn.dataset.baseline;
+      if (initialized) reloadBaseline();
+      else { initOnce(); if (label) label.textContent = baselineLabels[state.baseline]; }
+    });
+  });
+
+  // Lazy-load: defer fetching videos until the section is near the viewport.
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries, obs) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) { initOnce(); obs.disconnect(); break; }
+      }
+    }, { rootMargin: '300px 0px' });
+    io.observe(grid);
+  } else {
+    initOnce();
+  }
+  syncSceneThumbs(false);
+})();
+
+</script>
+</body>
+</html>

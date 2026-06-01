@@ -1,0 +1,293 @@
+{
+  "title": "Sky Point Rendering",
+  "subtitle": "Baseline vs. wsky comparison on DIODE outdoor frames",
+  "scenes": [
+    {
+      "id": "sky_0",
+      "index": 0,
+      "title": "scene_00022/scan_00193/frame02",
+      "n_points": 190512,
+      "H": 378,
+      "W": 504,
+      "is_ppd": false,
+      "bin": "assets/sky_0.bin",
+      "input_image": "assets/sky_0_inp.png",
+      "camera": {
+        "position": [
+          0.0029375592712312937,
+          -0.0018162737833335996,
+          0.010605313815176487
+        ],
+        "target": [
+          0.0004007271199952811,
+          1.1550260782241821,
+          1.3825074434280396
+        ],
+        "up": [
+          -0.00017975694208871573,
+          -0.7561051249504089,
+          0.6544500589370728
+        ]
+      },
+      "bbox": {
+        "min": [
+          -2.0660903453826904,
+          0.5246748328208923,
+          0.7081336975097656
+        ],
+        "max": [
+          2.982872724533081,
+          5.081840991973877,
+          7.562397480010986
+        ]
+      },
+      "source_ply": "eval_results/video_depth_final/diode_ours_alldata_mog_sky_full_nolast/0000000/outdoor/scene_00022/scan_00193/pointclouds/frame02.ply"
+    },
+    {
+      "id": "sky_1",
+      "index": 1,
+      "title": "scene_00022/scan_00194/frame24",
+      "n_points": 190512,
+      "H": 378,
+      "W": 504,
+      "is_ppd": false,
+      "bin": "assets/sky_1.bin",
+      "input_image": "assets/sky_1_inp.png",
+      "camera": {
+        "position": [
+          -0.008280674926936626,
+          -0.019197415560483932,
+          -0.003002573736011982
+        ],
+        "target": [
+          1.2758591175079346,
+          -0.2028101682662964,
+          -1.5455412864685059
+        ],
+        "up": [
+          0.11580783873796463,
+          -0.9677994251251221,
+          0.22350116074085236
+        ]
+      },
+      "bbox": {
+        "min": [
+          0.28119078278541565,
+          -2.6611716747283936,
+          -6.596371650695801
+        ],
+        "max": [
+          5.693410873413086,
+          0.3856686055660248,
+          -0.22106659412384033
+        ]
+      },
+      "source_ply": "eval_results/video_depth_final/diode_ours_alldata_mog_sky_full_nolast/0000000/outdoor/scene_00022/scan_00194/pointclouds/frame24.ply"
+    },
+    {
+      "id": "sky_2",
+      "index": 2,
+      "title": "scene_00023/scan_00198/frame16",
+      "n_points": 190512,
+      "H": 378,
+      "W": 504,
+      "is_ppd": false,
+      "bin": "assets/sky_2.bin",
+      "input_image": "assets/sky_2_inp.png",
+      "camera": {
+        "position": [
+          -0.0008745715022087097,
+          0.0007817476289346814,
+          -0.0043660178780555725
+        ],
+        "target": [
+          -1.3328038454055786,
+          -0.3334881663322449,
+          -0.22222565114498138
+        ],
+        "up": [
+          0.16046732664108276,
+          -0.962984025478363,
+          0.2165917456150055
+        ]
+      },
+      "bbox": {
+        "min": [
+          -30.09592628479004,
+          -8.811704635620117,
+          -18.838417053222656
+        ],
+        "max": [
+          -0.33840903639793396,
+          0.08401833474636078,
+          0.21821941435337067
+        ]
+      },
+      "source_ply": "eval_results/video_depth_final/diode_ours_alldata_mog_sky_full_nolast/0000000/outdoor/scene_00023/scan_00198/pointclouds/frame16.ply"
+    },
+    {
+      "id": "sky_3",
+      "index": 3,
+      "title": "scene_00024/scan_00202/frame32",
+      "n_points": 190512,
+      "H": 378,
+      "W": 504,
+      "is_ppd": false,
+      "bin": "assets/sky_3.bin",
+      "input_image": "assets/sky_3_inp.png",
+      "camera": {
+        "position": [
+          -0.010024018585681915,
+          -0.0031070972327142954,
+          0.014536806382238865
+        ],
+        "target": [
+          -1.299375295639038,
+          -0.24699780344963074,
+          1.0131758451461792
+        ],
+        "up": [
+          0.28878968954086304,
+          -0.9425818920135498,
+          0.1677493304014206
+        ]
+      },
+      "bbox": {
+        "min": [
+          -5.834469795227051,
+          -3.247730016708374,
+          0.1739031970500946
+        ],
+        "max": [
+          -0.7100033164024353,
+          0.4066213369369507,
+          4.688075065612793
+        ]
+      },
+      "source_ply": "eval_results/video_depth_final/diode_ours_alldata_mog_sky_full_nolast/0000000/outdoor/scene_00024/scan_00202/pointclouds/frame32.ply"
+    },
+    {
+      "id": "sky_4",
+      "index": 4,
+      "title": "scene_00022/scan_00195/frame40",
+      "n_points": 190512,
+      "H": 378,
+      "W": 504,
+      "is_ppd": false,
+      "bin": "assets/sky_4.bin",
+      "input_image": "assets/sky_4_inp.png",
+      "camera": {
+        "position": [
+          -0.023067884147167206,
+          -0.011826645582914352,
+          0.0032180401030927896
+        ],
+        "target": [
+          -1.7787655591964722,
+          0.8415974378585815,
+          0.39560723304748535
+        ],
+        "up": [
+          -0.1585477739572525,
+          -0.667543888092041,
+          0.7274941205978394
+        ]
+      },
+      "bbox": {
+        "min": [
+          -7.288202285766602,
+          0.02892637625336647,
+          -0.41421523690223694
+        ],
+        "max": [
+          -0.6051957607269287,
+          3.7223644256591797,
+          5.257949352264404
+        ]
+      },
+      "source_ply": "eval_results/video_depth_final/diode_ours_alldata_mog_sky_full_nolast/0000000/outdoor/scene_00022/scan_00195/pointclouds/frame40.ply"
+    },
+    {
+      "id": "sky_5",
+      "index": 5,
+      "title": "scene_00022/scan_00193/frame48",
+      "n_points": 190512,
+      "H": 378,
+      "W": 504,
+      "is_ppd": false,
+      "bin": "assets/sky_5.bin",
+      "input_image": "assets/sky_5_inp.png",
+      "camera": {
+        "position": [
+          0.00019712904759217054,
+          -0.0013840511674061418,
+          0.0066542974673211575
+        ],
+        "target": [
+          -0.6142549514770508,
+          0.46249765157699585,
+          1.1793813705444336
+        ],
+        "up": [
+          -0.05678878352046013,
+          -0.9406855702400208,
+          0.33449310064315796
+        ]
+      },
+      "bbox": {
+        "min": [
+          -3.573835611343384,
+          0.016329726204276085,
+          0.2006927877664566
+        ],
+        "max": [
+          0.1795264482498169,
+          4.575231075286865,
+          13.245555877685547
+        ]
+      },
+      "source_ply": "eval_results/video_depth_final/diode_ours_alldata_mog_sky_full_nolast/0000000/outdoor/scene_00022/scan_00193/pointclouds/frame48.ply"
+    },
+    {
+      "id": "sky_6",
+      "index": 6,
+      "title": "scene_00024/scan_00202/frame24",
+      "n_points": 190512,
+      "H": 378,
+      "W": 504,
+      "is_ppd": false,
+      "bin": "assets/sky_6.bin",
+      "input_image": "assets/sky_6_inp.png",
+      "camera": {
+        "position": [
+          -0.10755854099988937,
+          0.00390856247395277,
+          0.050639908760786057
+        ],
+        "target": [
+          0.8017641305923462,
+          -0.4222356081008911,
+          -0.30719316005706787
+        ],
+        "up": [
+          -0.2794102430343628,
+          -0.9031493663787842,
+          0.3259618282318115
+        ]
+      },
+      "bbox": {
+        "min": [
+          0.18162262439727783,
+          -3.5053727626800537,
+          -3.1874406337738037
+        ],
+        "max": [
+          4.0310797691345215,
+          -0.01958492584526539,
+          0.0830092802643776
+        ]
+      },
+      "source_ply": "eval_results/video_depth_final/diode_ours_alldata_mog_sky_full_nolast/0000000/outdoor/scene_00024/scan_00202/pointclouds/frame24.ply"
+    }
+  ]
+}

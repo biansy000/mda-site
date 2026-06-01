@@ -1,0 +1,50 @@
+{
+  "title": "Unimodal Point Rendering \u00b7 Interactive",
+  "subtitle": "DA3-GIANT (pretrained) \u00b7 DIODE indoors / scene_00020 / scan_00184 \u00b7 frame 1 (00020_00184_indoors_050_020.png) \u00b7 hover or touch the boundaries to zoom in",
+  "scene": {
+    "id": "frame1",
+    "title": "00020_00184_indoors_050_020.png",
+    "n_points": 190512,
+    "H": 378,
+    "W": 504,
+    "bin": "assets/frame1.bin",
+    "input_image": "assets/frame1_rgb.png",
+    "depth_image": "assets/frame1_depth.png",
+    "display_image": "assets/frame1_display.png",
+    "nearest_map": "assets/frame1_nearest.bin",
+    "snap_threshold_pixels": 12,
+    "zoom_window_pixels": 24,
+    "camera": {
+      "position": [
+        0.0003582589270081371,
+        0.001296067493967712,
+        0.0012298931833356619
+      ],
+      "target": [
+        0.0010295481188222766,
+        0.2618899941444397,
+        0.786370038986206
+      ],
+      "up": [
+        -0.0005126865580677986,
+        -0.9418046474456787,
+        0.33616021275520325
+      ]
+    },
+    "bbox": {
+      "min": [
+        -0.3117409348487854,
+        0.04382479190826416,
+        0.34134480357170105
+      ],
+      "max": [
+        0.2566036581993103,
+        0.5718006491661072,
+        1.0330899953842163
+      ]
+    },
+    "n_edges": 1447,
+    "model": "pretrained",
+    "checkpoint": "checkpoints/DA3-GIANT/model.safetensors"
+  }
+}

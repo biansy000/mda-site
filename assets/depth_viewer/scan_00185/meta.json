@@ -1,0 +1,1 @@
+{"N":4,"L":5,"H":378,"W":504,"loss_type":"logl2","alpha":0.2,"dist_mode_default":"gmm","views":[{"K":3376,"offset_bytes":0},{"K":1492,"offset_bytes":189056},{"K":2448,"offset_bytes":272608},{"K":1644,"offset_bytes":409696},{"K":3486,"offset_bytes":501760}]}
