@@ -1843,3 +1843,33 @@ b.tldr-inline-label { font-weight: 700; }
   .tv-thumb-row { gap: 5px; }
   .tv-thumbs .scene-thumb.is-active { transform: scale(1.14); }
 }
+
+/* ===================== Results table (Marigold V2 section) ===================== */
+.results-table-wrap {
+  max-width: 560px;
+  margin: 28px auto 0;
+}
+.results-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+.results-table th,
+.results-table td { padding: 8px 16px; text-align: center; }
+.results-table th:first-child,
+.results-table td:first-child { text-align: left; }
+.results-table thead th {
+  font-family: 'Google Sans', sans-serif;
+  font-weight: 500;
+  color: var(--fg-mute);
+  border-bottom: 1px solid var(--border);
+}
+.results-table tbody tr + tr td { border-top: 1px solid var(--border); }
+.results-table tr.is-ours td { background: var(--ours); font-weight: 700; color: var(--fg); }
+.results-table tr.is-ours td:first-child { color: var(--link); }
